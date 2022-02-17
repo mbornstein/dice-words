@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Draggable from 'react-draggable';
 import './index.css';
-import {points, die} from './config.js';
+import { points, die } from './config.js';
+import { withinRange, any, argmax, connectedComponents } from './utils.js';
 
 
 const cols = 4;
@@ -74,15 +75,38 @@ function Menu(props) {
         <img className='icon' src={`${process.env.PUBLIC_URL}/random.svg`}></img>
       </div>
       <Timer startTime={props.startTime}/>
+      <div className="score">{props.score}</div>
     </div>
   )
 }
 
-function Field(props) {
-  return (
-    <div className="field">
-    </div>
-  )
+function touchVertical(dicePosition1, dicePosition2) {
+  return withinRange(dicePosition1.y, dicePosition2.y) && withinRange(dicePosition1.x, dicePosition2.x, diceWidth);
+}
+function touchHorizontal(dicePosition1, dicePosition2) {
+  return withinRange(dicePosition1.x, dicePosition2.x) && withinRange(dicePosition1.y, dicePosition2.y, diceWidth);
+}
+function areNeighbors(dicePosition1, dicePosition2) {
+  return touchHorizontal(dicePosition1, dicePosition2) || touchVertical(dicePosition1, dicePosition2);
+}
+
+function connectedDices(positions) {
+  let components = [];
+  components = connectedComponents(
+    positions.map((e, index) => index),
+    (index1, index2) => areNeighbors(positions[index1], positions[index2])
+  );
+  return components.filter(comp => comp.length > 1);
+}
+
+function wordsInComponent(component, positions) {
+  let horizontalWords = connectedComponents(component, (diceIndex1, diceIndex2) =>
+    touchHorizontal(positions[diceIndex1], positions[diceIndex2])
+  );
+  let verticalWords = connectedComponents(component, (diceIndex1, diceIndex2) =>
+    touchVertical(positions[diceIndex1], positions[diceIndex2])
+  );
+  return horizontalWords.concat(verticalWords).filter(word => word.length > 1);
 }
 
 class Game extends React.Component {
@@ -92,6 +116,7 @@ class Game extends React.Component {
       roll: die.map(() => parseInt(Math.random() * 6)),
       positions: die.map((dice, index) => startingPosition(index)),
       startTime: Date.now(),
+      score: 0,
     }
   }
 
@@ -100,7 +125,18 @@ class Game extends React.Component {
       roll: die.map(() => parseInt(Math.random() * 6)),
       positions: die.map((dice, index) => startingPosition(index)),
       startTime: Date.now(),
+      score: 0,
     });
+  }
+
+  calculateScore(positions, roll) {
+    let components = connectedDices(positions);
+    if (components.length >= 1) {
+      let biggestComponent = components[argmax(components.map(e => e.length))];
+      let words = wordsInComponent(biggestComponent, positions);
+      return words.flat().map(diceIndex => points[die[diceIndex][roll[diceIndex]]]).reduce((a, b) => a + b, 0)
+    }
+    return 0;
   }
 
   handleStopDragging(diceIndex, event, coreData) {
@@ -108,7 +144,8 @@ class Game extends React.Component {
     let y = coreData.lastY;
     let positions = this.state.positions.slice();
     positions[diceIndex] = {x, y};
-    this.setState({positions});
+    let score = this.calculateScore(positions, this.state.roll);
+    this.setState({positions, score});
   }
 
   render() {
@@ -127,6 +164,7 @@ class Game extends React.Component {
         <Menu
           onStart={() => this.handleRestart()}
           startTime={this.state.startTime}
+          score={this.state.score}
         />
       </div>
     );
