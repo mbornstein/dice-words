@@ -1,7 +1,7 @@
 {
-  "name": "scrabble",
+  "name": "dice-words",
   "version": "0.1.0",
-  "homepage": "https://www.mbornstein.de/scrabble/",
+  "homepage": "https://www.mbornstein.de/dice-words/",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.2",
