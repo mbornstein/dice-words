@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import Draggable from 'react-draggable';
 import './index.css';
 import { points, die } from './config.js';
-import { withinRange, any, argmax, connectedComponents } from './utils.js';
+import { withinRange, argmax, connectedComponents } from './utils.js';
 
 
 const cols = 4;
