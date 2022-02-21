@@ -6,8 +6,8 @@ import { points, die } from './config.js';
 import { withinRange, argmax, connectedComponents } from './utils.js';
 
 
-const cols = 4;
-const grid = 8;
+const cols = 3;
+const grid = 48;
 const diceWidth = 48;
 
 function startingPosition(index) {
